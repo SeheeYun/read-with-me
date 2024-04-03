@@ -1,0 +1,20 @@
+.read_with_me-controller {
+  position: fixed;
+  width: 300px;
+  height: 300px;
+  top: 50%;
+  right: 0;
+  background-color: beige;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.read_with_me__button {
+  background: none;
+  border: none;
+}
+
+.qwe {
+  background-color: red;
+}
