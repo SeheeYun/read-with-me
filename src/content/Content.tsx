@@ -1,5 +1,3 @@
-import './Content.css';
-
 const EXCLUDED_TAGS = ['HEADER', 'FOOTER', 'NAV', 'A', 'BUTTON', 'ASIDE'];
 
 function isVisible(element: Element): boolean {
@@ -103,13 +101,12 @@ export default function Content() {
 
   const pause = () => {
     synth.cancel();
-    console.log('pause');
     isPlaying = false;
   };
 
   return (
-    <div className="qwe">
-      <button className="read_with_me__button" onClick={play}>
+    <div className="read-with-me__controller">
+      <button className="read-with-me__button" onClick={play}>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
@@ -124,7 +121,7 @@ export default function Content() {
           />
         </svg>
       </button>
-      <button className="read_with_me__button" onClick={pause}>
+      <button className="read-with-me__button" onClick={pause}>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
