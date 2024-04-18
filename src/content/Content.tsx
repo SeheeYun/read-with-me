@@ -23,6 +23,46 @@ function hasExcludedTag(element: Element) {
   return false;
 }
 
+// 1. 중복되지않아야함 - 부모요소가 set에 이미있으면 건너뜀
+// 2. div는 텍스트노드를 포함하는 것들만 추출 - div의 자식노드들을 순회하며 텍스트노드가 있으면 set에 추가
+// 3. header, footer, nav, a, button, aside는 읽지않아야하므로 제외
+function getBlocks() {
+  const elements = Array.from(
+    document.querySelectorAll('div, h1, h2, h3, h4, h5, h6, p, li')
+  );
+  const elementsSet = new Set();
+
+  elements.forEach(element => {
+    const parent = element.parentNode;
+    if (elementsSet.has(parent)) return;
+
+    if (element.textContent?.trim() === '') return;
+
+    if (!isVisible(element)) return;
+
+    if (hasExcludedTag(element)) return;
+
+    const text = element.textContent?.trim();
+    if (element.tagName === 'P' && text?.length && text.length < 10) return;
+
+    if (element.tagName !== 'DIV') {
+      elementsSet.add(element);
+      return;
+    }
+
+    element.childNodes.forEach(childNode => {
+      if (
+        childNode.nodeType === Node.TEXT_NODE &&
+        childNode.textContent?.trim() !== ''
+      ) {
+        elementsSet.add(element);
+      }
+    });
+  });
+
+  return Array.from(elementsSet) as HTMLElement[];
+}
+
 export default function Content() {
   let currentIndex = 0;
   let blocks: HTMLElement[] = [];
@@ -30,71 +70,31 @@ export default function Content() {
 
   const synth = window.speechSynthesis;
 
-  // 1. 중복되지않아야함 - 부모요소가 set에 이미있으면 건너뜀
-  // 2. div는 텍스트노드를 포함하는 것들만 추출 - div의 자식노드들을 순회하며 텍스트노드가 있으면 set에 추가
-  // 3. header, footer, nav, a, button, aside는 읽지않아야하므로 제외
-  function getBlocks() {
-    const elements = Array.from(
-      document.querySelectorAll('div, h1, h2, h3, p, li')
-    );
-    const elementsSet = new Set();
-
-    elements.forEach(element => {
-      const parent = element.parentNode;
-      if (elementsSet.has(parent)) return;
-
-      if (element.textContent?.trim() === '') return;
-
-      if (!isVisible(element)) return;
-
-      if (hasExcludedTag(element)) return;
-
-      const text = element.textContent?.trim();
-      if (element.tagName === 'P' && text?.length && text.length < 10) return;
-
-      if (element.tagName !== 'DIV') {
-        elementsSet.add(element);
-        return;
-      }
-
-      element.childNodes.forEach(childNode => {
-        if (
-          childNode.nodeType === Node.TEXT_NODE &&
-          childNode.textContent?.trim() !== ''
-        ) {
-          elementsSet.add(element);
-        }
-      });
-    });
-
-    return Array.from(elementsSet) as HTMLElement[];
-  }
-
-  function playText() {
-    if (currentIndex < blocks.length) {
-      console.log(currentIndex, blocks[currentIndex].innerText);
-      const currentElement = blocks[currentIndex];
-      currentElement.style.backgroundColor = 'blue';
-      currentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      const textToSpeak = currentElement.innerText;
-      const utterance = new SpeechSynthesisUtterance(textToSpeak);
-      utterance.rate = 5;
-      utterance.onend = function () {
-        currentIndex++;
-        playText();
-      };
-      synth.speak(utterance);
-      isPlaying = true;
-    } else {
+  const playText = () => {
+    if (currentIndex >= blocks.length) {
       isPlaying = false;
+      return;
     }
-  }
+
+    console.log(currentIndex, blocks[currentIndex].innerText);
+    isPlaying = true;
+    const currentElement = blocks[currentIndex];
+    currentElement.style.backgroundColor = 'blue';
+    currentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const textToSpeak = currentElement.innerText;
+    const utterance = new SpeechSynthesisUtterance(textToSpeak);
+    utterance.rate = 5;
+    utterance.onend = function () {
+      currentIndex++;
+      playText();
+    };
+    synth.speak(utterance);
+  };
 
   const play = () => {
     if (!isPlaying) {
       blocks = getBlocks();
       console.log(blocks);
-      currentIndex = 0;
       playText();
     }
   };
