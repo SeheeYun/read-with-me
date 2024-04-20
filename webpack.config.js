@@ -6,6 +6,7 @@ module.exports = {
   entry: {
     index: './src/popup/index.tsx',
     content: './src/content/index.tsx',
+    background: './src/background/background.ts',
   },
   mode: 'production',
   module: {

@@ -1,3 +1,5 @@
+import { useEffect, useRef } from 'react';
+
 const EXCLUDED_TAGS = ['HEADER', 'FOOTER', 'NAV', 'A', 'BUTTON', 'ASIDE'];
 
 function isVisible(element: Element): boolean {
@@ -27,6 +29,7 @@ function hasExcludedTag(element: Element) {
 // 2. div는 텍스트노드를 포함하는 것들만 추출 - div의 자식노드들을 순회하며 텍스트노드가 있으면 set에 추가
 // 3. header, footer, nav, a, button, aside는 읽지않아야하므로 제외
 function getBlocks() {
+  console.log('run getBlocks!');
   const elements = Array.from(
     document.querySelectorAll('div, h1, h2, h3, h4, h5, h6, p, li')
   );
@@ -65,20 +68,20 @@ function getBlocks() {
 
 export default function Content() {
   let currentIndex = 0;
-  let blocks: HTMLElement[] = [];
+  const blocksRef = useRef<HTMLElement[]>([]);
   let isPlaying = false;
 
   const synth = window.speechSynthesis;
 
   const playText = () => {
-    if (currentIndex >= blocks.length) {
+    if (currentIndex >= blocksRef.current.length) {
       isPlaying = false;
       return;
     }
 
-    console.log(currentIndex, blocks[currentIndex].innerText);
+    console.log(currentIndex, blocksRef.current[currentIndex].innerText);
     isPlaying = true;
-    const currentElement = blocks[currentIndex];
+    const currentElement = blocksRef.current[currentIndex];
     currentElement.style.backgroundColor = 'blue';
     currentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
     const textToSpeak = currentElement.innerText;
@@ -93,16 +96,37 @@ export default function Content() {
 
   const play = () => {
     if (!isPlaying) {
-      blocks = getBlocks();
-      console.log(blocks);
       playText();
     }
   };
 
   const pause = () => {
-    synth.cancel();
-    isPlaying = false;
+    if (synth.speaking) {
+      synth.cancel();
+      isPlaying = false;
+    }
   };
+
+  const setBlocks = () => {
+    pause();
+    currentIndex = 0;
+    blocksRef.current = getBlocks();
+    console.log(blocksRef.current);
+  };
+
+  useEffect(() => {
+    console.log('fist setBlocks!');
+    setBlocks();
+  }, []);
+
+  useEffect(() => {
+    chrome.runtime.onMessage.addListener(function (request) {
+      if (request.message === 'tab_updated') {
+        console.log('tab updated! and setBlocks!');
+        setBlocks();
+      }
+    });
+  }, []);
 
   return (
     <div className="read-with-me__controller">
