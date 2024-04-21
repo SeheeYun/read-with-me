@@ -36,60 +36,153 @@ function getBlocks() {
   const elementsSet = new Set();
 
   elements.forEach(element => {
+    // 부모요소가 이미 set에 있으면 건너뜀
     const parent = element.parentNode;
     if (elementsSet.has(parent)) return;
 
+    // 텍스트가 없는 요소는 건너뜀
     if (element.textContent?.trim() === '') return;
 
+    // 보이지 않는 요소는 건너뜀
     if (!isVisible(element)) return;
 
+    // 제외할 태그는 건너뜀
     if (hasExcludedTag(element)) return;
 
+    // p태그나 div태그인데 텍스트가 10자 이하면 건너뜀
     const text = element.textContent?.trim();
-    if (element.tagName === 'P' && text?.length && text.length < 10) return;
-
-    if (element.tagName !== 'DIV') {
-      elementsSet.add(element);
+    if (
+      (element.tagName === 'P' || element.tagName === 'DIV') &&
+      text?.length &&
+      text.length < 10
+    )
       return;
+
+    // div태그인데 텍스트노드가 firstChild가 아니면 건너뜀
+    if (element.tagName === 'DIV') {
+      if (element.firstChild?.nodeType !== Node.TEXT_NODE) return;
     }
 
-    element.childNodes.forEach(childNode => {
-      if (
-        childNode.nodeType === Node.TEXT_NODE &&
-        childNode.textContent?.trim() !== ''
-      ) {
-        elementsSet.add(element);
-      }
-    });
+    elementsSet.add(element);
   });
 
   return Array.from(elementsSet) as HTMLElement[];
 }
 
+type Offset = {
+  childIndex: number;
+  offset: number;
+};
+
+function getSentences(block: HTMLElement) {
+  // 첫번째 자식노드가 텍스트노드가 아닐경우 텍스트노드까지 찾아내야함
+  let firstChild = block.firstChild;
+  while (firstChild && firstChild.nodeType !== Node.TEXT_NODE) {
+    firstChild = firstChild.firstChild;
+  }
+
+  // 마지막 자식노드가 텍스트노드가 아닐경우 텍스트노드까지 찾아내야함
+  let lastChild = block.lastChild;
+  while (lastChild && lastChild.nodeType !== Node.TEXT_NODE) {
+    lastChild = lastChild.lastChild;
+  }
+
+  let startNode = firstChild;
+  let endNode = lastChild;
+
+  if (!startNode || !endNode) return;
+
+  const childNodes = block.childNodes;
+  const offsets: Offset[] = [];
+
+  for (let i = 0; i < childNodes.length; i++) {
+    const text = childNodes[i].textContent;
+    if (text?.includes('. ')) {
+      const sentences = text.split('. ');
+      for (let j = 0; j < sentences.length; j++) {
+        const offset = text.indexOf(sentences[j]);
+        offsets.push({ childIndex: i, offset });
+      }
+    }
+  }
+
+  const ranges = [];
+
+  let startOffset = 0;
+  let endOffset = endNode.textContent?.length || 0;
+
+  for (let i = 0; i < offsets.length; i++) {
+    const offset = offsets[i];
+    const range = new Range();
+    range.setStart(startNode, startOffset);
+    range.setEnd(childNodes[offset.childIndex], offset.offset);
+    ranges.push(range);
+    startNode = childNodes[offset.childIndex];
+    startOffset = offset.offset;
+  }
+
+  const range = new Range();
+  range.setStart(startNode, startOffset);
+  range.setEnd(endNode, endOffset);
+  ranges.push(range);
+
+  return ranges;
+}
+
 export default function Content() {
   let currentIndex = 0;
+  let currSentenceIndex = 0;
   const blocksRef = useRef<HTMLElement[]>([]);
   let isPlaying = false;
 
+  const colorHighlight = new Highlight();
   const synth = window.speechSynthesis;
 
+  // 1. 재생을 누르면 해당 블록을 포커싱
+  // 2. 블록에서 문장 Ranges를 구함
+  // 3. 문장을 tts로 순차적으로 재생
+  // 4. 모든 문장을 다 읽었으면 다음 블록으로 넘어감
   const playText = () => {
     if (currentIndex >= blocksRef.current.length) {
       isPlaying = false;
       return;
     }
 
-    console.log(currentIndex, blocksRef.current[currentIndex].innerText);
-    isPlaying = true;
-    const currentElement = blocksRef.current[currentIndex];
-    currentElement.style.backgroundColor = 'blue';
-    currentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    const textToSpeak = currentElement.innerText;
-    const utterance = new SpeechSynthesisUtterance(textToSpeak);
-    utterance.rate = 5;
-    utterance.onend = function () {
+    const block = blocksRef.current[currentIndex];
+    block.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const sentences = getSentences(block);
+    if (!sentences) {
       currentIndex++;
       playText();
+      return;
+    }
+
+    isPlaying = true;
+    playSentenceText(sentences);
+  };
+
+  const playSentenceText = (sentences: Range[]) => {
+    if (currSentenceIndex >= sentences.length) {
+      // 다음 블록으로 넘어감
+      currSentenceIndex = 0;
+      currentIndex++;
+      playText();
+      return;
+    }
+
+    const sentence = sentences[currSentenceIndex];
+    console.log('range text', sentence.toString());
+
+    colorHighlight.add(sentence);
+    CSS.highlights.set('read-with-me-sentense-highlight', colorHighlight);
+
+    const textToSpeak = sentence.toString();
+    const utterance = new SpeechSynthesisUtterance(textToSpeak);
+    utterance.rate = 2;
+    utterance.onend = function () {
+      colorHighlight.delete(sentence);
+      currSentenceIndex++;
+      playSentenceText(sentences);
     };
     synth.speak(utterance);
   };

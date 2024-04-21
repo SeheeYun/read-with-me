@@ -1,6 +1,7 @@
 import Content from './Content';
 import { ShadowDom } from './ShadowDom';
 import { render } from './render';
+import './index.css';
 // import styles from './Content.css';
 
 // console.log('style', styles);
