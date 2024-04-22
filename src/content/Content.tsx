@@ -29,7 +29,6 @@ function hasExcludedTag(element: Element) {
 // 2. div는 텍스트노드를 포함하는 것들만 추출 - div의 자식노드들을 순회하며 텍스트노드가 있으면 set에 추가
 // 3. header, footer, nav, a, button, aside는 읽지않아야하므로 제외
 function getBlocks() {
-  console.log('run getBlocks!');
   const elements = Array.from(
     document.querySelectorAll('div, h1, h2, h3, h4, h5, h6, p, li')
   );
@@ -178,7 +177,7 @@ export default function Content() {
 
     const textToSpeak = sentence.toString();
     const utterance = new SpeechSynthesisUtterance(textToSpeak);
-    utterance.rate = 2;
+    utterance.rate = 6;
     utterance.onend = function () {
       colorHighlight.delete(sentence);
       currSentenceIndex++;
@@ -203,12 +202,12 @@ export default function Content() {
   const setBlocks = () => {
     pause();
     currentIndex = 0;
+    currSentenceIndex = 0;
     blocksRef.current = getBlocks();
     console.log(blocksRef.current);
   };
 
   useEffect(() => {
-    console.log('fist setBlocks!');
     setBlocks();
   }, []);
 
@@ -216,7 +215,10 @@ export default function Content() {
     chrome.runtime.onMessage.addListener(function (request) {
       if (request.message === 'tab_updated') {
         console.log('tab updated! and setBlocks!');
-        setBlocks();
+
+        setTimeout(() => {
+          setBlocks();
+        }, 1500);
       }
     });
   }, []);
