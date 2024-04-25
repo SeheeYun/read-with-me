@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const EXCLUDED_TAGS = ['HEADER', 'FOOTER', 'NAV', 'A', 'BUTTON', 'ASIDE'];
 
@@ -133,6 +133,7 @@ export default function Content() {
   let currSentenceIndex = 0;
   const blocksRef = useRef<HTMLElement[]>([]);
   let isPlaying = false;
+  const [isPaused, setIsPaused] = useState(true);
 
   const colorHighlight = new Highlight();
   const synth = window.speechSynthesis;
@@ -223,34 +224,84 @@ export default function Content() {
     });
   }, []);
 
+  const toggle = () => {
+    setIsPaused(prev => !prev);
+  };
+
   return (
-    <div className="read-with-me__controller">
-      <button className="read-with-me__button" onClick={play}>
+    <div className="controller_wrapper">
+      <button
+        className={`button toggle ${isPaused ? 'play' : 'pause'}`}
+        onClick={toggle}
+      >
+        {isPaused ? (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 21 24"
+            width="26px"
+            height="26px"
+          >
+            <path
+              fillRule="evenodd"
+              d="M4.5 5.653c0-1.427 1.529-2.33 2.779-1.643l11.54 6.347c1.295.712 1.295 2.573 0 3.286L7.28 19.99c-1.25.687-2.779-.217-2.779-1.643V5.653Z"
+              clipRule="evenodd"
+            />
+          </svg>
+        ) : (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            width="26px"
+            height="26px"
+          >
+            <path
+              fillRule="evenodd"
+              d="M6.75 5.25a.75.75 0 0 1 .75-.75H9a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H7.5a.75.75 0 0 1-.75-.75V5.25Zm7.5 0A.75.75 0 0 1 15 4.5h1.5a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H15a.75.75 0 0 1-.75-.75V5.25Z"
+              clipRule="evenodd"
+            />
+          </svg>
+        )}
+      </button>
+      <button className="button arrow">
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-          width="24"
-          height="24"
+          viewBox="0 0 20 20"
+          width="20px"
+          height="20px"
         >
           <path
             fillRule="evenodd"
-            d="M4.5 5.653c0-1.427 1.529-2.33 2.779-1.643l11.54 6.347c1.295.712 1.295 2.573 0 3.286L7.28 19.99c-1.25.687-2.779-.217-2.779-1.643V5.653Z"
+            d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z"
             clipRule="evenodd"
           />
         </svg>
+        <span className="button__text">3.2x</span>
       </button>
-      <button className="read-with-me__button" onClick={pause}>
+      <button className="button arrow">
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-          width="24"
-          height="24"
+          viewBox="0 0 20 20"
+          width="20px"
+          height="20px"
         >
           <path
             fillRule="evenodd"
-            d="M6.75 5.25a.75.75 0 0 1 .75-.75H9a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H7.5a.75.75 0 0 1-.75-.75V5.25Zm7.5 0A.75.75 0 0 1 15 4.5h1.5a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H15a.75.75 0 0 1-.75-.75V5.25Z"
+            d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z"
+            clipRule="evenodd"
+          />
+        </svg>
+        <span className="button__text">유나</span>
+      </button>
+      <button className="button close">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 20 20"
+          width="20px"
+          height="20px"
+        >
+          <path
+            fillRule="evenodd"
+            d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM8.28 7.22a.75.75 0 0 0-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 1 0 1.06 1.06L10 11.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L11.06 10l1.72-1.72a.75.75 0 0 0-1.06-1.06L10 8.94 8.28 7.22Z"
             clipRule="evenodd"
           />
         </svg>
