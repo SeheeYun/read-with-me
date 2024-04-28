@@ -8,6 +8,7 @@ declare class Highlight {
   constructor(...range: Range[]);
   add(range: Range): void;
   delete(range: Range): void;
+  clear(): void;
 }
 
 declare namespace CSS {

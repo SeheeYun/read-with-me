@@ -2,6 +2,189 @@ import { useEffect, useRef, useState } from 'react';
 
 const EXCLUDED_TAGS = ['HEADER', 'FOOTER', 'NAV', 'A', 'BUTTON', 'ASIDE'];
 
+export default function Content() {
+  const currentIndexRef = useRef(0);
+  const currSentenceIndexRef = useRef(0);
+  const blocksRef = useRef<HTMLElement[]>([]);
+  const colorHighlightRef = useRef<Highlight>(new Highlight());
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  const synth = window.speechSynthesis;
+
+  const play = () => {
+    // 모든 블록이 끝나면 종료
+    if (currentIndexRef.current >= blocksRef.current.length) {
+      setIsPlaying(false);
+      return;
+    }
+
+    const block = blocksRef.current[currentIndexRef.current];
+
+    const sentences = getSentences(block);
+    if (!sentences) {
+      currentIndexRef.current++;
+      play();
+      return;
+    }
+
+    setIsPlaying(true);
+    block.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    playSentenceText(sentences);
+  };
+
+  const playSentenceText = (sentences: Range[]) => {
+    // 모든 문장 재생이 끝나면 다음 블록으로 넘어감
+    if (currSentenceIndexRef.current >= sentences.length) {
+      currSentenceIndexRef.current = 0;
+      currentIndexRef.current++;
+      play();
+      return;
+    }
+
+    const sentence = sentences[currSentenceIndexRef.current];
+
+    colorHighlightRef.current.add(sentence);
+    CSS.highlights.set(
+      'read-with-me-sentense-highlight',
+      colorHighlightRef.current
+    );
+
+    const textToSpeak = sentence.toString();
+    const utterance = new SpeechSynthesisUtterance(textToSpeak);
+    utterance.rate = 4;
+    utterance.onend = function () {
+      colorHighlightRef.current.delete(sentence);
+      currSentenceIndexRef.current++;
+      playSentenceText(sentences);
+    };
+    synth.speak(utterance);
+  };
+
+  const pause = () => {
+    if (synth.speaking) {
+      synth.cancel();
+      setIsPlaying(false);
+      colorHighlightRef.current.clear();
+    }
+  };
+
+  const toggle = () => {
+    if (isPlaying) {
+      pause();
+    } else {
+      play();
+    }
+  };
+
+  const reset = () => {
+    currentIndexRef.current = 0;
+    currSentenceIndexRef.current = 0;
+    blocksRef.current = getBlocks();
+    console.log(blocksRef.current);
+  };
+
+  useEffect(() => {
+    blocksRef.current = getBlocks();
+    console.log(blocksRef.current);
+
+    // pause()를 쓰면 문장 재생이 다 끝난뒤에 cancel됨
+    return () => synth.cancel();
+  }, []);
+
+  useEffect(() => {
+    chrome.runtime.onMessage.addListener(function (request) {
+      if (request.message === 'tab_updated') {
+        console.log('tab updated! and reset Blocks!');
+        pause();
+        setTimeout(() => {
+          reset();
+        }, 1500);
+      }
+    });
+  }, []);
+
+  return (
+    <div className="controller_wrapper">
+      <button
+        className={`button toggle ${isPlaying ? 'pause' : 'play'}`}
+        onClick={toggle}
+      >
+        {isPlaying ? (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            width="26px"
+            height="26px"
+          >
+            <path
+              fillRule="evenodd"
+              d="M6.75 5.25a.75.75 0 0 1 .75-.75H9a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H7.5a.75.75 0 0 1-.75-.75V5.25Zm7.5 0A.75.75 0 0 1 15 4.5h1.5a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H15a.75.75 0 0 1-.75-.75V5.25Z"
+              clipRule="evenodd"
+            />
+          </svg>
+        ) : (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 21 24"
+            width="26px"
+            height="26px"
+          >
+            <path
+              fillRule="evenodd"
+              d="M4.5 5.653c0-1.427 1.529-2.33 2.779-1.643l11.54 6.347c1.295.712 1.295 2.573 0 3.286L7.28 19.99c-1.25.687-2.779-.217-2.779-1.643V5.653Z"
+              clipRule="evenodd"
+            />
+          </svg>
+        )}
+      </button>
+      <button className="button arrow">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 20 20"
+          width="20px"
+          height="20px"
+        >
+          <path
+            fillRule="evenodd"
+            d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z"
+            clipRule="evenodd"
+          />
+        </svg>
+        <span className="button__text">3.2x</span>
+      </button>
+      <button className="button arrow">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 20 20"
+          width="20px"
+          height="20px"
+        >
+          <path
+            fillRule="evenodd"
+            d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z"
+            clipRule="evenodd"
+          />
+        </svg>
+        <span className="button__text">유나</span>
+      </button>
+      <button className="button close">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 20 20"
+          width="20px"
+          height="20px"
+        >
+          <path
+            fillRule="evenodd"
+            d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM8.28 7.22a.75.75 0 0 0-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 1 0 1.06 1.06L10 11.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L11.06 10l1.72-1.72a.75.75 0 0 0-1.06-1.06L10 8.94 8.28 7.22Z"
+            clipRule="evenodd"
+          />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
 function isVisible(element: Element): boolean {
   let currentElement = element;
   while (currentElement) {
@@ -126,186 +309,4 @@ function getSentences(block: HTMLElement) {
   ranges.push(range);
 
   return ranges;
-}
-
-export default function Content() {
-  let currentIndex = 0;
-  let currSentenceIndex = 0;
-  const blocksRef = useRef<HTMLElement[]>([]);
-  let isPlaying = false;
-  const [isPaused, setIsPaused] = useState(true);
-
-  const colorHighlight = new Highlight();
-  const synth = window.speechSynthesis;
-
-  // 1. 재생을 누르면 해당 블록을 포커싱
-  // 2. 블록에서 문장 Ranges를 구함
-  // 3. 문장을 tts로 순차적으로 재생
-  // 4. 모든 문장을 다 읽었으면 다음 블록으로 넘어감
-  const playText = () => {
-    if (currentIndex >= blocksRef.current.length) {
-      isPlaying = false;
-      return;
-    }
-
-    const block = blocksRef.current[currentIndex];
-    block.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    const sentences = getSentences(block);
-    if (!sentences) {
-      currentIndex++;
-      playText();
-      return;
-    }
-
-    isPlaying = true;
-    playSentenceText(sentences);
-  };
-
-  const playSentenceText = (sentences: Range[]) => {
-    if (currSentenceIndex >= sentences.length) {
-      // 다음 블록으로 넘어감
-      currSentenceIndex = 0;
-      currentIndex++;
-      playText();
-      return;
-    }
-
-    const sentence = sentences[currSentenceIndex];
-    console.log('range text', sentence.toString());
-
-    colorHighlight.add(sentence);
-    CSS.highlights.set('read-with-me-sentense-highlight', colorHighlight);
-
-    const textToSpeak = sentence.toString();
-    const utterance = new SpeechSynthesisUtterance(textToSpeak);
-    utterance.rate = 6;
-    utterance.onend = function () {
-      colorHighlight.delete(sentence);
-      currSentenceIndex++;
-      playSentenceText(sentences);
-    };
-    synth.speak(utterance);
-  };
-
-  const play = () => {
-    if (!isPlaying) {
-      playText();
-    }
-  };
-
-  const pause = () => {
-    if (synth.speaking) {
-      synth.cancel();
-      isPlaying = false;
-    }
-  };
-
-  const setBlocks = () => {
-    pause();
-    currentIndex = 0;
-    currSentenceIndex = 0;
-    blocksRef.current = getBlocks();
-    console.log(blocksRef.current);
-  };
-
-  useEffect(() => {
-    setBlocks();
-  }, []);
-
-  useEffect(() => {
-    chrome.runtime.onMessage.addListener(function (request) {
-      if (request.message === 'tab_updated') {
-        console.log('tab updated! and setBlocks!');
-
-        setTimeout(() => {
-          setBlocks();
-        }, 1500);
-      }
-    });
-  }, []);
-
-  const toggle = () => {
-    setIsPaused(prev => !prev);
-  };
-
-  return (
-    <div className="controller_wrapper">
-      <button
-        className={`button toggle ${isPaused ? 'play' : 'pause'}`}
-        onClick={toggle}
-      >
-        {isPaused ? (
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 21 24"
-            width="26px"
-            height="26px"
-          >
-            <path
-              fillRule="evenodd"
-              d="M4.5 5.653c0-1.427 1.529-2.33 2.779-1.643l11.54 6.347c1.295.712 1.295 2.573 0 3.286L7.28 19.99c-1.25.687-2.779-.217-2.779-1.643V5.653Z"
-              clipRule="evenodd"
-            />
-          </svg>
-        ) : (
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            width="26px"
-            height="26px"
-          >
-            <path
-              fillRule="evenodd"
-              d="M6.75 5.25a.75.75 0 0 1 .75-.75H9a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H7.5a.75.75 0 0 1-.75-.75V5.25Zm7.5 0A.75.75 0 0 1 15 4.5h1.5a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H15a.75.75 0 0 1-.75-.75V5.25Z"
-              clipRule="evenodd"
-            />
-          </svg>
-        )}
-      </button>
-      <button className="button arrow">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 20 20"
-          width="20px"
-          height="20px"
-        >
-          <path
-            fillRule="evenodd"
-            d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z"
-            clipRule="evenodd"
-          />
-        </svg>
-        <span className="button__text">3.2x</span>
-      </button>
-      <button className="button arrow">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 20 20"
-          width="20px"
-          height="20px"
-        >
-          <path
-            fillRule="evenodd"
-            d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z"
-            clipRule="evenodd"
-          />
-        </svg>
-        <span className="button__text">유나</span>
-      </button>
-      <button className="button close">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 20 20"
-          width="20px"
-          height="20px"
-        >
-          <path
-            fillRule="evenodd"
-            d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM8.28 7.22a.75.75 0 0 0-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 1 0 1.06 1.06L10 11.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L11.06 10l1.72-1.72a.75.75 0 0 0-1.06-1.06L10 8.94 8.28 7.22Z"
-            clipRule="evenodd"
-          />
-        </svg>
-      </button>
-    </div>
-  );
 }
