@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import Speed from '../component/Speed';
+import Voice from '../component/Voice';
 
 const EXCLUDED_TAGS = ['HEADER', 'FOOTER', 'NAV', 'A', 'BUTTON', 'ASIDE'];
 const TTS_RATE_STORAGE_KEY = 'tts-rate';
+const TTS_VOICE_STORAGE_KEY = 'tts-voice';
 
 export default function Content() {
   const currentIndexRef = useRef(0);
@@ -10,7 +12,8 @@ export default function Content() {
   const blocksRef = useRef<HTMLElement[]>([]);
   const colorHighlightRef = useRef<Highlight>(new Highlight());
   const [isPlaying, setIsPlaying] = useState(false);
-  const [speed, setSpeed] = useState(3);
+  const [speed, setSpeed] = useState<number>();
+  const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice>();
 
   const synth = window.speechSynthesis;
 
@@ -36,6 +39,8 @@ export default function Content() {
   };
 
   const playSentenceText = (sentences: Range[]) => {
+    if (!speed || !selectedVoice) return;
+
     // 모든 문장 재생이 끝나면 다음 블록으로 넘어감
     if (currSentenceIndexRef.current >= sentences.length) {
       currSentenceIndexRef.current = 0;
@@ -55,6 +60,7 @@ export default function Content() {
     const textToSpeak = sentence.toString();
     const utterance = new SpeechSynthesisUtterance(textToSpeak);
     utterance.rate = speed;
+    utterance.voice = selectedVoice;
     utterance.onend = function () {
       colorHighlightRef.current.delete(sentence);
       currSentenceIndexRef.current++;
@@ -87,11 +93,16 @@ export default function Content() {
   };
 
   const changeSpeed = (direction: 'up' | 'down') => {
-    pause();
+    if (!speed) return;
+
     const rate = Number((speed + (direction === 'up' ? 0.2 : -0.2)).toFixed(1));
-    chrome.storage.local.set({ TTS_RATE_STORAGE_KEY: rate });
+    chrome.storage.local.set({ [TTS_RATE_STORAGE_KEY]: rate });
     setSpeed(rate);
-    play();
+  };
+
+  const changeVoice = (voice: SpeechSynthesisVoice) => {
+    chrome.storage.local.set({ [TTS_VOICE_STORAGE_KEY]: voice.name });
+    setSelectedVoice(voice);
   };
 
   useEffect(() => {
@@ -119,6 +130,30 @@ export default function Content() {
       setSpeed(result[TTS_RATE_STORAGE_KEY] || 3);
     });
   }, []);
+
+  useEffect(() => {
+    synth.onvoiceschanged = () => {
+      const voices = synth.getVoices();
+      chrome.storage.local.get(TTS_VOICE_STORAGE_KEY, result => {
+        const voice = voices.find(
+          voice => voice.name === result[TTS_VOICE_STORAGE_KEY]
+        );
+        setSelectedVoice(voice || voices[0]);
+      });
+    };
+    return () => {
+      synth.onvoiceschanged = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isPlaying) {
+      pause();
+      play();
+    }
+  }, [speed, selectedVoice]);
+
+  if (!speed || !selectedVoice) return null;
 
   return (
     <div className="controller_wrapper">
@@ -155,35 +190,7 @@ export default function Content() {
         )}
       </button>
       <Speed speed={speed} changeSpeed={changeSpeed} />
-      <button className="button arrow">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 20 20"
-          width="20px"
-          height="20px"
-        >
-          <path
-            fillRule="evenodd"
-            d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z"
-            clipRule="evenodd"
-          />
-        </svg>
-        <span className="button__text">유나</span>
-      </button>
-      <button className="button close">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 20 20"
-          width="20px"
-          height="20px"
-        >
-          <path
-            fillRule="evenodd"
-            d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM8.28 7.22a.75.75 0 0 0-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 1 0 1.06 1.06L10 11.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L11.06 10l1.72-1.72a.75.75 0 0 0-1.06-1.06L10 8.94 8.28 7.22Z"
-            clipRule="evenodd"
-          />
-        </svg>
-      </button>
+      <Voice selectedVoice={selectedVoice} changeVoice={changeVoice} />
     </div>
   );
 }
