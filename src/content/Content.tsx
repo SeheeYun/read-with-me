@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import Speed from '../component/Speed';
 
 const EXCLUDED_TAGS = ['HEADER', 'FOOTER', 'NAV', 'A', 'BUTTON', 'ASIDE'];
+const TTS_RATE_STORAGE_KEY = 'tts-rate';
 
 export default function Content() {
   const currentIndexRef = useRef(0);
@@ -87,11 +88,9 @@ export default function Content() {
 
   const changeSpeed = (direction: 'up' | 'down') => {
     pause();
-    if (direction === 'up') {
-      setSpeed(prev => Number((prev + 0.2).toFixed(1)));
-    } else {
-      setSpeed(prev => Number((prev - 0.2).toFixed(1)));
-    }
+    const rate = Number((speed + (direction === 'up' ? 0.2 : -0.2)).toFixed(1));
+    chrome.storage.local.set({ TTS_RATE_STORAGE_KEY: rate });
+    setSpeed(rate);
     play();
   };
 
@@ -99,12 +98,12 @@ export default function Content() {
     blocksRef.current = getBlocks();
     console.log(blocksRef.current);
 
-    // pause()를 쓰면 문장 재생이 다 끝난뒤에 cancel됨
+    // 정의한 pause()를 쓰면 문장 재생이 다 끝난뒤에 cancel됨
     return () => synth.cancel();
   }, []);
 
   useEffect(() => {
-    chrome.runtime.onMessage.addListener(function (request) {
+    chrome.runtime.onMessage.addListener(request => {
       if (request.message === 'tab_updated') {
         console.log('tab updated! and reset Blocks!');
         pause();
@@ -112,6 +111,12 @@ export default function Content() {
           reset();
         }, 1500);
       }
+    });
+  }, []);
+
+  useEffect(() => {
+    chrome.storage.local.get(TTS_RATE_STORAGE_KEY, result => {
+      setSpeed(result[TTS_RATE_STORAGE_KEY] || 3);
     });
   }, []);
 
