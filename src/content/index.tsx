@@ -11,6 +11,9 @@ const styles = `
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 500;
 }
 
 button {
@@ -22,13 +25,7 @@ button {
   align-items: center;
 }
 
-.button{
-  svg {
-    fill: #ffffff;
-  }
-}
-
-.button.toggle {
+.toggle {
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -47,20 +44,28 @@ button {
   }
 }
 
-.button.arrow {
+.speed {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  .button{
+    > svg {
+      fill: #ffffffb8;
+    }
+  }
+}
+
+.arrow {
   margin-right: 6px;
   > svg {
     fill: #ffffffb8;
   }
   .button__text {
-    color: #ffffff;
-    font-size: 16px;
     margin-left: -4px;
-    font-weight: 500;
   }
 }
 
-.button.close {
+.close {
   > svg {
     fill: #ffffff8c;
   }
@@ -74,8 +79,8 @@ button {
   display: flex;
   align-items: center;
   flex-direction: column;
-  gap: 14px;
-  padding: 16px 6px;
+  gap: 16px;
+  padding: 16px 4px;
   border: 0.6px solid;
   border-color: #404040;
 

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import Speed from '../component/Speed';
 
 const EXCLUDED_TAGS = ['HEADER', 'FOOTER', 'NAV', 'A', 'BUTTON', 'ASIDE'];
 
@@ -8,6 +9,7 @@ export default function Content() {
   const blocksRef = useRef<HTMLElement[]>([]);
   const colorHighlightRef = useRef<Highlight>(new Highlight());
   const [isPlaying, setIsPlaying] = useState(false);
+  const [speed, setSpeed] = useState(3);
 
   const synth = window.speechSynthesis;
 
@@ -51,7 +53,7 @@ export default function Content() {
 
     const textToSpeak = sentence.toString();
     const utterance = new SpeechSynthesisUtterance(textToSpeak);
-    utterance.rate = 4;
+    utterance.rate = speed;
     utterance.onend = function () {
       colorHighlightRef.current.delete(sentence);
       currSentenceIndexRef.current++;
@@ -83,6 +85,16 @@ export default function Content() {
     console.log(blocksRef.current);
   };
 
+  const changeSpeed = (direction: 'up' | 'down') => {
+    pause();
+    if (direction === 'up') {
+      setSpeed(prev => Number((prev + 0.2).toFixed(1)));
+    } else {
+      setSpeed(prev => Number((prev - 0.2).toFixed(1)));
+    }
+    play();
+  };
+
   useEffect(() => {
     blocksRef.current = getBlocks();
     console.log(blocksRef.current);
@@ -106,7 +118,7 @@ export default function Content() {
   return (
     <div className="controller_wrapper">
       <button
-        className={`button toggle ${isPlaying ? 'pause' : 'play'}`}
+        className={`toggle ${isPlaying ? 'pause' : 'play'}`}
         onClick={toggle}
       >
         {isPlaying ? (
@@ -137,21 +149,7 @@ export default function Content() {
           </svg>
         )}
       </button>
-      <button className="button arrow">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 20 20"
-          width="20px"
-          height="20px"
-        >
-          <path
-            fillRule="evenodd"
-            d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z"
-            clipRule="evenodd"
-          />
-        </svg>
-        <span className="button__text">3.2x</span>
-      </button>
+      <Speed speed={speed} changeSpeed={changeSpeed} />
       <button className="button arrow">
         <svg
           xmlns="http://www.w3.org/2000/svg"
