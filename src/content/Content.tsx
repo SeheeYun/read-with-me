@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Speed from '../component/Speed';
 import Voice from '../component/Voice';
 
@@ -92,18 +92,23 @@ export default function Content() {
     console.log(blocksRef.current);
   };
 
-  const changeSpeed = (direction: 'up' | 'down') => {
-    if (!speed) return;
+  const changeSpeed = useCallback(
+    (direction: 'up' | 'down') => {
+      if (!speed) return;
 
-    const rate = Number((speed + (direction === 'up' ? 0.2 : -0.2)).toFixed(1));
-    chrome.storage.local.set({ [TTS_RATE_STORAGE_KEY]: rate });
-    setSpeed(rate);
-  };
+      const rate = Number(
+        (speed + (direction === 'up' ? 0.2 : -0.2)).toFixed(1)
+      );
+      chrome.storage.local.set({ [TTS_RATE_STORAGE_KEY]: rate });
+      setSpeed(rate);
+    },
+    [speed]
+  );
 
-  const changeVoice = (voice: SpeechSynthesisVoice) => {
+  const changeVoice = useCallback((voice: SpeechSynthesisVoice) => {
     chrome.storage.local.set({ [TTS_VOICE_STORAGE_KEY]: voice.name });
     setSelectedVoice(voice);
-  };
+  }, []);
 
   useEffect(() => {
     blocksRef.current = getBlocks();

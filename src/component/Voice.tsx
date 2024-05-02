@@ -1,9 +1,11 @@
+import { memo } from 'react';
+
 interface Props {
   selectedVoice: SpeechSynthesisVoice;
   changeVoice: (voice: SpeechSynthesisVoice) => void;
 }
 
-export default function Voice({ selectedVoice, changeVoice }: Props) {
+const Voice = memo(({ selectedVoice, changeVoice }: Props) => {
   const voices = window.speechSynthesis.getVoices();
 
   const handleChangeVoice = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -53,4 +55,6 @@ export default function Voice({ selectedVoice, changeVoice }: Props) {
       </div>
     </div>
   );
-}
+});
+
+export default Voice;

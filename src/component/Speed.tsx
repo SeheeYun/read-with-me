@@ -1,9 +1,11 @@
+import { memo } from 'react';
+
 interface Props {
   speed: number;
   changeSpeed: (direction: 'up' | 'down') => void;
 }
 
-export default function Speed({ speed, changeSpeed }: Props) {
+const Speed = memo(({ speed, changeSpeed }: Props) => {
   return (
     <div className="speed">
       <button className="button" onClick={() => changeSpeed('up')}>
@@ -47,4 +49,6 @@ export default function Speed({ speed, changeSpeed }: Props) {
       </button>
     </div>
   );
-}
+});
+
+export default Speed;
