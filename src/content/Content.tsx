@@ -103,9 +103,11 @@ export default function Content() {
     (direction: 'up' | 'down') => {
       if (!speed) return;
 
-      const rate = Number(
-        (speed + (direction === 'up' ? 0.2 : -0.2)).toFixed(1)
-      );
+      let newSpeed = speed + (direction === 'up' ? 0.2 : -0.2);
+      newSpeed = Math.min(newSpeed, 5);
+      newSpeed = Math.max(newSpeed, 0.2);
+
+      const rate = Number(newSpeed.toFixed(1));
       chrome.storage.local.set({ [TTS_RATE_STORAGE_KEY]: rate });
       setSpeed(rate);
     },
