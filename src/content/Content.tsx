@@ -92,7 +92,6 @@ export default function Content() {
     currentIndexRef.current = 0;
     currSentenceIndexRef.current = 0;
     blocksRef.current = getBlocks();
-    console.log(blocksRef.current);
   };
 
   const close = () => {
@@ -120,7 +119,6 @@ export default function Content() {
 
   useEffect(() => {
     blocksRef.current = getBlocks();
-    console.log(blocksRef.current);
 
     // 정의한 pause()를 쓰면 문장 재생이 다 끝난뒤에 cancel됨
     return () => synth.cancel();
@@ -129,7 +127,6 @@ export default function Content() {
   useEffect(() => {
     chrome.runtime.onMessage.addListener(request => {
       if (request.message === 'tab_updated') {
-        console.log('tab updated! and reset Blocks!');
         pause();
         setTimeout(() => {
           reset();
