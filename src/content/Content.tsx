@@ -14,10 +14,13 @@ export default function Content() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState<number>();
   const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice>();
+  const [isVisible, setIsVisible] = useState(true);
 
   const synth = window.speechSynthesis;
 
   const play = () => {
+    if (blocksRef.current.length === 0) return;
+
     // 모든 블록이 끝나면 종료
     if (currentIndexRef.current >= blocksRef.current.length) {
       setIsPlaying(false);
@@ -92,6 +95,11 @@ export default function Content() {
     console.log(blocksRef.current);
   };
 
+  const close = () => {
+    pause();
+    setIsVisible(false);
+  };
+
   const changeSpeed = useCallback(
     (direction: 'up' | 'down') => {
       if (!speed) return;
@@ -131,6 +139,14 @@ export default function Content() {
   }, []);
 
   useEffect(() => {
+    chrome.runtime.onMessage.addListener(request => {
+      if (request.message === 'toggle_component') {
+        setIsVisible(prev => !prev);
+      }
+    });
+  }, []);
+
+  useEffect(() => {
     chrome.storage.local.get(TTS_RATE_STORAGE_KEY, result => {
       setSpeed(result[TTS_RATE_STORAGE_KEY] || 3);
     });
@@ -158,7 +174,7 @@ export default function Content() {
     }
   }, [speed, selectedVoice]);
 
-  if (!speed || !selectedVoice) return null;
+  if (!isVisible || !speed || !selectedVoice) return null;
 
   return (
     <div className="controller_wrapper">
@@ -196,7 +212,7 @@ export default function Content() {
       </button>
       <Speed speed={speed} changeSpeed={changeSpeed} />
       <Voice selectedVoice={selectedVoice} changeVoice={changeVoice} />
-      <button className="button close">
+      <button className="button close" onClick={close}>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 20 20"
@@ -214,7 +230,7 @@ export default function Content() {
   );
 }
 
-function isVisible(element: Element): boolean {
+function visible(element: Element): boolean {
   let currentElement = element;
   while (currentElement) {
     const styles = window.getComputedStyle(currentElement);
@@ -255,7 +271,7 @@ function getBlocks() {
     if (element.textContent?.trim() === '') return;
 
     // 보이지 않는 요소는 건너뜀
-    if (!isVisible(element)) return;
+    if (!visible(element)) return;
 
     // 제외할 태그는 건너뜀
     if (hasExcludedTag(element)) return;

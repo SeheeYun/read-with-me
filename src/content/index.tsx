@@ -72,6 +72,7 @@ svg {
 .speed {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 6px;
 }
 
@@ -132,6 +133,7 @@ svg {
 } 
 
 .close {
+  margin-bottom: 4px;
 }
 `;
 
