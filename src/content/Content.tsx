@@ -305,12 +305,20 @@ function getSentences(block: HTMLElement) {
   // 첫번째 자식노드가 텍스트노드가 아닐경우 텍스트노드까지 찾아내야함
   let firstChild = block.firstChild;
   while (firstChild && firstChild.nodeType !== Node.TEXT_NODE) {
+    if (!firstChild.firstChild) {
+      firstChild = firstChild.nextSibling;
+      continue;
+    }
     firstChild = firstChild.firstChild;
   }
 
   // 마지막 자식노드가 텍스트노드가 아닐경우 텍스트노드까지 찾아내야함
   let lastChild = block.lastChild;
   while (lastChild && lastChild.nodeType !== Node.TEXT_NODE) {
+    if (!lastChild.lastChild) {
+      lastChild = lastChild.previousSibling;
+      continue;
+    }
     lastChild = lastChild.lastChild;
   }
 
@@ -340,11 +348,23 @@ function getSentences(block: HTMLElement) {
 
   for (let i = 0; i < offsets.length; i++) {
     const offset = offsets[i];
+    let childNode = childNodes[offset.childIndex];
+    while (childNode.nodeType !== Node.TEXT_NODE) {
+      if (childNode.firstChild) {
+        childNode = childNode.firstChild;
+      }
+    }
+
+    if (!childNode) continue;
+    if (childNode.textContent && !childNode.textContent[offset.offset]) {
+      continue;
+    }
+
     const range = new Range();
     range.setStart(startNode, startOffset);
-    range.setEnd(childNodes[offset.childIndex], offset.offset);
+    range.setEnd(childNode, offset.offset);
     ranges.push(range);
-    startNode = childNodes[offset.childIndex];
+    startNode = childNode;
     startOffset = offset.offset;
   }
 
