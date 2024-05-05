@@ -12,7 +12,7 @@ const styles = `
   padding: 0;
   box-sizing: border-box;
   color: #ffffff;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 500;
 }
 
@@ -25,9 +25,34 @@ button {
   align-items: center;
 }
 
+svg {
+  fill: #ffffffb8;
+}
+
+.controller_wrapper {
+  position: fixed;
+  top: calc(50% - 100px);
+  right: 14px;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 16px;
+  padding: 8px 6px;
+
+  /* blur effect */
+  background-color: #000000a3;
+  border-radius: 100px;
+  box-shadow: 0 10px 15px rgb(0 0 0 / 30%);
+  backdrop-filter: blur(20px);
+  background-blend-mode: overlay;
+  border: 0.6px solid;
+  border-color: #242424;
+}
+
 .toggle {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   transition: all 0.2s ease-in;
   &.play{
@@ -48,48 +73,65 @@ button {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  .button{
-    > svg {
-      fill: #ffffffb8;
-    }
-  }
 }
 
-.arrow {
-  margin-right: 6px;
-  > svg {
-    fill: #ffffffb8;
-  }
-  .button__text {
+.voice {
+  position: relative;
+  .button {
     margin-left: -4px;
   }
-}
-
-.close {
-  > svg {
-    fill: #ffffff8c;
+  .button__text {
+    text-wrap: nowrap;
+    margin-left: -4px;
+    width: 24px;
+    text-align: left;
   }
 }
 
-.controller_wrapper {
-  position: fixed;
-  top: calc(50% - 70px);
-  right: 2%;
-  z-index: 999;
+.voice_selector {
+  height: 300px;
+  overflow-y: scroll;
+  list-style: none;
+  position: absolute;
+  right: 54px;
+  top: 0px;
+  padding: 16px 6px;
+
+  background-color: #575757;
+  border-radius: 8px;
+  box-shadow: 0 10px 15px rgb(0 0 0 / 30%);
+  border: 0.6px solid;
+  border-color: #242424;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.voice_selector::-webkit-scrollbar {
+  display: none;
+}
+.voice_selector.visible {
+ display: block;
+}
+.voice_selector.hidden {
+  display: none;
+}
+
+.voice_selector__item {
+  text-wrap: nowrap;
+  padding: 4px 10px;
+  border-radius: 6px;
+
   display: flex;
   align-items: center;
-  flex-direction: column;
-  gap: 16px;
-  padding: 16px 4px;
-  border: 0.6px solid;
-  border-color: #404040;
+}
+.voice_selector__icon {
+  width: 18px;
+  padding-top: 2px;
+}
+.voice_selector__item:hover {
+  background-color: #808080;
+} 
 
-  /* blur effect */
-  background-color: #000000a3;
-  border-radius: 20px;
-  box-shadow: 0 10px 15px rgb(0 0 0 / 30%);
-  backdrop-filter: blur(10px);
-  background-blend-mode: overlay;
+.close {
 }
 `;
 
