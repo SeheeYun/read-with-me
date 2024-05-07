@@ -32,7 +32,12 @@ module.exports = {
   },
   plugins: [
     new CopyPlugin({
-      patterns: [{ from: 'manifest.json', to: '../manifest.json' }],
+      patterns: [
+        {
+          from: path.resolve('src/static'),
+          to: path.resolve('dist'),
+        },
+      ],
     }),
     ...getHtmlPlugins(['index']),
   ],
