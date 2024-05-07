@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Speed from '../component/Speed';
 import Voice from '../component/Voice';
 
-const EXCLUDED_TAGS = ['HEADER', 'FOOTER', 'NAV', 'A', 'BUTTON', 'ASIDE'];
+const EXCLUDED_TAGS = ['FOOTER', 'NAV', 'A', 'BUTTON', 'ASIDE', 'TABLE'];
 const TTS_RATE_STORAGE_KEY = 'tts-rate';
 const TTS_VOICE_STORAGE_KEY = 'tts-voice';
 
@@ -284,9 +284,18 @@ function getBlocks() {
     )
       return;
 
-    // div태그인데 텍스트노드가 firstChild가 아니면 건너뜀
+    // div태그인데 자식노드중에 텍스트를 가진 텍스트노드가 없을 경우 건너뜀
     if (element.tagName === 'DIV') {
-      if (element.firstChild?.nodeType !== Node.TEXT_NODE) return;
+      let hasText = false;
+      element.childNodes.forEach(childNode => {
+        if (
+          childNode.nodeType === Node.TEXT_NODE &&
+          childNode.textContent?.trim()
+        ) {
+          hasText = true;
+        }
+      });
+      if (!hasText) return;
     }
 
     elementsSet.add(element);
