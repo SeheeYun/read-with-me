@@ -201,16 +201,14 @@ export default function Content() {
 
         setButtonPosition({
           left: totalOffsetLeft - 50,
-          top: totalOffsetTop,
+          top: totalOffsetTop + 8,
           index: blocksRef.current.indexOf(element),
         });
       }
     };
-    const throttledHandleMouseOver = throttle(handleMouseOver, 100);
 
-    document.addEventListener('mouseover', throttledHandleMouseOver);
-    return () =>
-      document.removeEventListener('mouseover', throttledHandleMouseOver);
+    document.addEventListener('mouseover', handleMouseOver);
+    return () => document.removeEventListener('mouseover', handleMouseOver);
   }, []);
 
   if (!isVisible || !speed || !selectedVoice) return null;
@@ -446,15 +444,4 @@ function getSentences(block: HTMLElement) {
   ranges.push(range);
 
   return ranges;
-}
-
-function throttle(func: Function, delay: number) {
-  let lastCall = 0;
-  return function (...args: any[]) {
-    const now = new Date().getTime();
-    if (now - lastCall >= delay) {
-      lastCall = now;
-      func(...args);
-    }
-  };
 }
