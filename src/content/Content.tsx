@@ -15,6 +15,10 @@ export default function Content() {
   const [speed, setSpeed] = useState<number>();
   const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice>();
   const [isVisible, setIsVisible] = useState(true);
+  const [position, setPosition] = useState<{ top: number; left: number }>({
+    top: 0,
+    left: 0,
+  });
 
   const synth = window.speechSynthesis;
 
@@ -173,33 +177,100 @@ export default function Content() {
     }
   }, [speed, selectedVoice]);
 
+  useEffect(() => {
+    const handleMouseOver = (event: MouseEvent) => {
+      const element = event.target as HTMLElement;
+      if (blocksRef.current.includes(element)) {
+        let currentElement = element;
+        let totalOffsetTop = 0;
+        let totalOffsetLeft = 0;
+
+        while (currentElement) {
+          totalOffsetTop += currentElement.offsetTop;
+          totalOffsetLeft += currentElement.offsetLeft;
+          currentElement = currentElement.offsetParent as HTMLElement;
+        }
+
+        setPosition({
+          left: totalOffsetLeft - 60,
+          top: totalOffsetTop,
+        });
+      }
+    };
+    const throttledHandleMouseOver = throttle(handleMouseOver, 100);
+
+    document.addEventListener('mouseover', throttledHandleMouseOver);
+    return () =>
+      document.removeEventListener('mouseover', throttledHandleMouseOver);
+  }, []);
+
   if (!isVisible || !speed || !selectedVoice) return null;
 
   return (
-    <div className="controller_wrapper">
-      <button
-        className={`toggle ${isPlaying ? 'pause' : 'play'}`}
-        onClick={toggle}
-      >
-        {isPlaying ? (
+    <>
+      <div className="controller_wrapper">
+        <button
+          className={`toggle ${isPlaying ? 'pause' : 'play'}`}
+          onClick={toggle}
+        >
+          {isPlaying ? (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              width="26px"
+              height="26px"
+            >
+              <path
+                fillRule="evenodd"
+                d="M6.75 5.25a.75.75 0 0 1 .75-.75H9a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H7.5a.75.75 0 0 1-.75-.75V5.25Zm7.5 0A.75.75 0 0 1 15 4.5h1.5a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H15a.75.75 0 0 1-.75-.75V5.25Z"
+                clipRule="evenodd"
+              />
+            </svg>
+          ) : (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 21 24"
+              width="26px"
+              height="26px"
+            >
+              <path
+                fillRule="evenodd"
+                d="M4.5 5.653c0-1.427 1.529-2.33 2.779-1.643l11.54 6.347c1.295.712 1.295 2.573 0 3.286L7.28 19.99c-1.25.687-2.779-.217-2.779-1.643V5.653Z"
+                clipRule="evenodd"
+              />
+            </svg>
+          )}
+        </button>
+        <Speed speed={speed} changeSpeed={changeSpeed} />
+        <Voice selectedVoice={selectedVoice} changeVoice={changeVoice} />
+        <button className="button close" onClick={close}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            width="26px"
-            height="26px"
+            viewBox="0 0 20 20"
+            width="20px"
+            height="20px"
           >
             <path
               fillRule="evenodd"
-              d="M6.75 5.25a.75.75 0 0 1 .75-.75H9a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H7.5a.75.75 0 0 1-.75-.75V5.25Zm7.5 0A.75.75 0 0 1 15 4.5h1.5a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H15a.75.75 0 0 1-.75-.75V5.25Z"
+              d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM8.28 7.22a.75.75 0 0 0-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 1 0 1.06 1.06L10 11.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L11.06 10l1.72-1.72a.75.75 0 0 0-1.06-1.06L10 8.94 8.28 7.22Z"
               clipRule="evenodd"
             />
           </svg>
-        ) : (
+        </button>
+      </div>
+
+      <div
+        className="block_play_button"
+        style={{
+          transform: `translate(${position.left}px, ${position.top}px)`,
+        }}
+      >
+        <button className="toggle play button">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 21 24"
-            width="26px"
-            height="26px"
+            width="16px"
+            height="16px"
           >
             <path
               fillRule="evenodd"
@@ -207,25 +278,9 @@ export default function Content() {
               clipRule="evenodd"
             />
           </svg>
-        )}
-      </button>
-      <Speed speed={speed} changeSpeed={changeSpeed} />
-      <Voice selectedVoice={selectedVoice} changeVoice={changeVoice} />
-      <button className="button close" onClick={close}>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 20 20"
-          width="20px"
-          height="20px"
-        >
-          <path
-            fillRule="evenodd"
-            d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM8.28 7.22a.75.75 0 0 0-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 1 0 1.06 1.06L10 11.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L11.06 10l1.72-1.72a.75.75 0 0 0-1.06-1.06L10 8.94 8.28 7.22Z"
-            clipRule="evenodd"
-          />
-        </svg>
-      </button>
-    </div>
+        </button>
+      </div>
+    </>
   );
 }
 
@@ -382,4 +437,15 @@ function getSentences(block: HTMLElement) {
   ranges.push(range);
 
   return ranges;
+}
+
+function throttle(func: Function, delay: number) {
+  let lastCall = 0;
+  return function (...args: any[]) {
+    const now = new Date().getTime();
+    if (now - lastCall >= delay) {
+      lastCall = now;
+      func(...args);
+    }
+  };
 }

@@ -132,6 +132,19 @@ svg {
 .close {
   margin-bottom: 4px;
 }
+
+.block_play_button {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 999;
+  transition: transform 0.2s ease-in-out;
+}
+.toggle.play.button {
+  width: 26px;
+  height: 26px;
+  background: #70aaff;
+}
 `;
 
 render(
