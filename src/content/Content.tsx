@@ -15,9 +15,10 @@ export default function Content() {
   const [speed, setSpeed] = useState<number>();
   const [selectedVoice, setSelectedVoice] = useState<SpeechSynthesisVoice>();
   const [isVisible, setIsVisible] = useState(true);
-  const [position, setPosition] = useState<{ top: number; left: number }>({
-    top: 0,
-    left: 0,
+  const [buttonPosition, setButtonPosition] = useState({
+    top: -20,
+    left: -20,
+    index: 0,
   });
 
   const synth = window.speechSynthesis;
@@ -96,6 +97,13 @@ export default function Content() {
     currentIndexRef.current = 0;
     currSentenceIndexRef.current = 0;
     blocksRef.current = getBlocks();
+  };
+
+  const playWithIndex = () => {
+    pause();
+    currentIndexRef.current = buttonPosition.index;
+    currSentenceIndexRef.current = 0;
+    play();
   };
 
   const close = () => {
@@ -191,9 +199,10 @@ export default function Content() {
           currentElement = currentElement.offsetParent as HTMLElement;
         }
 
-        setPosition({
-          left: totalOffsetLeft - 60,
+        setButtonPosition({
+          left: totalOffsetLeft - 50,
           top: totalOffsetTop,
+          index: blocksRef.current.indexOf(element),
         });
       }
     };
@@ -262,15 +271,15 @@ export default function Content() {
       <div
         className="block_play_button"
         style={{
-          transform: `translate(${position.left}px, ${position.top}px)`,
+          transform: `translate(${buttonPosition.left}px, ${buttonPosition.top}px)`,
         }}
       >
-        <button className="toggle play button">
+        <button className="toggle play button" onClick={playWithIndex}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 21 24"
-            width="16px"
-            height="16px"
+            width="12px"
+            height="12px"
           >
             <path
               fillRule="evenodd"

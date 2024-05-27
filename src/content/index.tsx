@@ -141,9 +141,9 @@ svg {
   transition: transform 0.2s ease-in-out;
 }
 .toggle.play.button {
-  width: 26px;
-  height: 26px;
-  background: #70aaff;
+  width: 20px;
+  height: 20px;
+  background: #90bdffcc;
 }
 `;
 
