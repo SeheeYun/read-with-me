@@ -201,7 +201,7 @@ export default function Content() {
 
         setButtonPosition({
           left: totalOffsetLeft - 50,
-          top: totalOffsetTop + 8,
+          top: totalOffsetTop + 6,
           index: blocksRef.current.indexOf(element),
         });
       }
